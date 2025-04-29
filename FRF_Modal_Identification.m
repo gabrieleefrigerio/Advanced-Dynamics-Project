@@ -201,6 +201,9 @@ findPeaksCallback();
             % vettore delle omega nel range selezionato
             omega_vec = 2*pi*f_range;
 
+            % funzione di trasferimento sperimentale nel range selezionato
+            G_exp = FRF_range;
+
             % funzione di trasferimento numerica in formato anonymous
             modelFun = @(p, omega_vec) p(3)./ (-omega_vec.^2 + 2j*p(2)*p(1).*omega_vec + p(1)^2) + p(4) + p(5)./omega_vec.^2;
             % funzione con parametri scalati
