@@ -210,16 +210,39 @@ ylabel('Fase [rad]');
 title('Funzione di Trasferimento - Fase');
 xlim([0 max(f)]);
 
-%% Export FRF (numero complesso)
+%% Export FRF (numero complesso) con nome file in base alla posizione
+
+% Posizione accelerometro e martellata
+xj = 0.2;  % [m]
+xk = 1.2;  % [m]
+
+% Crea la cartella "Results" se non esiste
+if ~exist('Results', 'dir')
+    mkdir('Results');
+end
+
+% Determina nome file in base alle posizioni
+if abs(xj - xk) < 1e-6  % tolleranza per confronti floating point
+    suffix = sprintf('collocata_in_%.2fm', xj);
+else
+    suffix = sprintf('xj_%.2fm_xk_%.2fm', xj, xk);
+end
+
+% Sostituisci il punto con la virgola nel nome file (opzionale, stile EU)
+suffix = strrep(suffix, '.', ',');
 
 % Crea una matrice con frequenza [Hz], parte reale e parte immaginaria
 FRF_data = [f.' real(FRF).' imag(FRF).'];
 
+% Percorsi completi dei file
+csv_path = fullfile('Results', ['FRF_export_' suffix '.csv']);
+mat_path = fullfile('Results', ['FRF_export_' suffix '.mat']);
+
 % Salva su file CSV
-writematrix(FRF_data, 'FRF_export.csv');
+writematrix(FRF_data, csv_path);
 
 % Salva anche su file .mat (mantiene il numero complesso)
-save('FRF_export.mat', 'f', 'FRF');
+save(mat_path, 'f', 'FRF');
 
 % Messaggio di conferma
-disp('FRF esportata come numero complesso in "FRF_export.csv" e "FRF_export.mat"')
+disp(['FRF esportata in: ', csv_path, ' e ', mat_path]);
