@@ -35,14 +35,20 @@ f = data.f;
 %% GUI PER SCEGLIERE SE SELEZIONARE RANGE
 choice = questdlg('Vuoi selezionare un range specifico della FRF?', ...
     'Selezione range', 'Sì','No','No');
+
 if strcmp(choice, 'Sì')
-    figure('Name', 'Seleziona Range FRF');
+    figure('Name', 'Seleziona Range FRF', 'Position', [100 100 1600 900]);
     semilogy(f, abs(FRF)); grid on; grid minor;
     title('Seleziona due punti per il range');
     [xsel, ~] = ginput(2); close;
     fmin = min(xsel); fmax = max(xsel);
 else
-    fmin = min(f); fmax = max(f);
+    fmax = max(f);
+    if min(f) == 0
+        fmin = realmin;
+    else
+        fmin = min(f); 
+    end
 end
 
 idx = f >= fmin & f <= fmax;
@@ -270,7 +276,7 @@ findPeaksCallback();
         for i = 1:size(allParams,1)
             p = allParams(i,:);
             A = p(3);
-            G_total = G_total + A ./ (-omega_vec.^2 + 2j*p(2)*p(1)*omega_vec + p(1)^2) + p(4) + p(5)./omega_vec.^2;
+            G_total = G_total + A ./ (-omega_vec.^2 + 2j*p(2)*p(1)*omega_vec + p(1)^2) + p(4) + (p(5)./omega_vec.^2);
             modes(i,:) = {p(1)/(2*pi), p(2), p(1), p(3), p(4), p(5)};
         end
 
@@ -279,7 +285,7 @@ findPeaksCallback();
         % Tabella a sinistra (20% larghezza)
         uit = uitable(figFinal, ...
             'Units', 'normalized', ...
-            'Position', [0.05 0.15 0.25 0.75], ...
+            'Position', [0.05 0.15 0.20 0.75], ...
             'Data', modeTable{:,:}, ...
             'ColumnName', modeTable.Properties.VariableNames);
 
