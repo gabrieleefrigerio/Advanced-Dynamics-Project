@@ -201,21 +201,21 @@ findPeaksCallback();
             % vettore delle omega nel range selezionato
             omega_vec = 2*pi*f_range;
 
-            % funzione di trasferimento sperimentale nel range selezionato
-            G_exp = FRF_range;
-
             % funzione di trasferimento numerica in formato anonymous
-            modelFun = @(p, w) p(3)./ (-w.^2 + 2j*p(2)*p(1)*w + p(1)^2) + p(4) + p(5)./w.^2;
-
+            modelFun = @(p, omega_vec) p(3)./ (-omega_vec.^2 + 2j*p(2)*p(1).*omega_vec + p(1)^2) + p(4) + p(5)./omega_vec.^2;
+            % funzione con parametri scalati
+            scale = [1, 1, 1, 1e-3, 1e-6];
+            modelFun_scaled = @(p, omega_vec) modelFun(p .* scale, omega_vec);
+            
             % cost function da minimizzare
-            residui = @(p) sum( real(G_exp - modelFun(p, omega_vec)).^2 + imag(G_exp - modelFun(p, omega_vec)).^2  );
+            residui = @(p) sum( real(G_exp - modelFun_scaled(p, omega_vec)).^2 + imag(G_exp - modelFun_scaled(p, omega_vec)).^2  );
 
             % setting lsqnonlin
             opts = optimoptions('lsqnonlin','Display','off');
 
             % effettuo l'ottimizzazione
-            [popt, ~] = lsqnonlin(residui, p0, [], [], opts);
-
+            [popt_scaled, ~] = lsqnonlin(residui, p0, [], [], opts);
+            popt = popt_scaled .* scale;
             % salvo i valori ottimizzati
             optimized = popt;
 
