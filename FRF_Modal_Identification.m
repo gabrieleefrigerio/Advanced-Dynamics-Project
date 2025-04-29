@@ -327,30 +327,41 @@ findPeaksCallback();
         %% FUNZIONE TASTO EXPORT
         function exportData()
 
-            % === Salva FRF (ampiezza e fase) ===
-            frfData = table(f_range(:), abs(FRF_range(:)), angle(FRF_range(:)), ...
-                'VariableNames', {'Frequenza_Hz', 'Ampiezza_FRF', 'Fase_FRF_rad'});
+    % Crea cartella Results se non esiste
+    resultsDir = 'Results';
+    if ~exist(resultsDir, 'dir')
+        mkdir(resultsDir);
+    end
 
-            % CSV
-            frfCSVname = ['FRF_SDOF_Optimize.csv'];
-            writetable(frfData, frfCSVname);
+    % === Salva FRF (ampiezza e fase) ===
+    frfData = table(f_range(:), abs(FRF_range(:)), angle(FRF_range(:)), ...
+        'VariableNames', {'Frequenza_Hz', 'Ampiezza_FRF', 'Fase_FRF_rad'});
 
-            % MAT
-            save(['FRF_SDOF_Optimize.mat'], 'frfData');
+    % Percorsi file FRF
+    frfCSVname = fullfile(resultsDir, 'FRF_SDOF_Optimize.csv');
+    frfMATname = fullfile(resultsDir, 'FRF_SDOF_Optimize.mat');
 
-            % === Salva Tabella dei Modi ===
-            modeTable = cell2table(modes, ...
-                'VariableNames', {'Frequenza_Hz', 'Damping_xi', 'omega0', 'A', 'Rh', 'Rl'});
+    % Salva CSV e MAT
+    writetable(frfData, frfCSVname);
+    save(frfMATname, 'frfData');
 
-            % CSV
-            modesCSVname = ['ModeTable_FRF.csv'];
-            writetable(modeTable, modesCSVname);
+    % === Salva Tabella dei Modi ===
+    modeTable = cell2table(modes, ...
+        'VariableNames', {'Frequenza_Hz', 'Damping_xi', 'omega0', 'A', 'Rh', 'Rl'});
 
-            % MAT
-            save(['ModeTable_FRF.csv'], 'modeTable');
+    % Percorsi file Modi
+    modesCSVname = fullfile(resultsDir, 'ModeTable_FRF.csv');
+    modesMATname = fullfile(resultsDir, 'ModeTable_FRF.mat');
 
-            msgbox({'Dati esportati con successo!'});
-        end
+    % Salva CSV e MAT
+    writetable(modeTable, modesCSVname);
+    save(modesMATname, 'modeTable');
+
+    % Conferma
+    msgbox({'Dati esportati con successo!'}, 'Esportazione completata');
+
+end
+
 
     end
 
