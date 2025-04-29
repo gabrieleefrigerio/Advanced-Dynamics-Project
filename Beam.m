@@ -156,7 +156,7 @@ end
 %% Transfer Function
 
 % posizione acceleroemtro
-xj = 0.2; %[m]
+xj = 1.2; %[m]
 % posizione martellata
 xk = 1.2; %[m]
 
