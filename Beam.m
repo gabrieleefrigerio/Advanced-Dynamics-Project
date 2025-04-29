@@ -122,35 +122,35 @@ modes_shapes = modes_shapes ./ normaliz;  % Normalizzazione dei modi
 
 
 
-%% Animation
-% mode = 1;
-% 
-% colors_p = lines(length(i_nat));  % palette colori
-% 
-% figure('Position', [100, 100, 1200, 500]); hold on; grid on;
-% title(['Mode ', num2str(mode)])
-% plot(x, modes_shapes(mode,:), ':k', 'LineWidth', 2)
-% h1 = plot(x, zeros(size(x)), 'LineWidth', 2, 'color', colors_p(mode, :));
-% xlabel('Posizione [m]')
-% ylabel('Deformazione (modale)')
-% ylim([-1, 1] * max(abs(modes_shapes(mode,:))) * 1.1)
-% 
-% % Parametri dell’animazione
-% T = 1 / f(i_nat(mode));     % Periodo reale della frequenza naturale
-% n_cycles = 4;               % Numero di cicli da animare
-% n_frames = 1000;             % Numero di frame totali
-% 
-% t = linspace(0, n_cycles*T, n_frames);  % tempo continuo
-% 
-% for k = 1:length(t)
-%     if ishandle(h1)
-%         w1 = modes_shapes(mode,:) * cos(2*pi*f(i_nat(mode)) * t(k));  % uso 2πf per l'argomento del coseno
-%         h1.YData = w1;
-%         pause(T/n_frames);
-%     else
-%         return
-%     end
-% end
+% Animation
+mode = 1;
+
+colors_p = lines(length(i_nat));  % palette colori
+
+figure('Position', [100, 100, 1200, 500]); hold on; grid on;
+title(['Mode ', num2str(mode)])
+plot(x, modes_shapes(mode,:), ':k', 'LineWidth', 2)
+h1 = plot(x, zeros(size(x)), 'LineWidth', 2, 'color', colors_p(mode, :));
+xlabel('Posizione [m]')
+ylabel('Deformazione (modale)')
+ylim([-1, 1] * max(abs(modes_shapes(mode,:))) * 1.1)
+
+% Parametri dell’animazione
+T = 1 / f(i_nat(mode));     % Periodo reale della frequenza naturale
+n_cycles = 4;               % Numero di cicli da animare
+n_frames = 1000;             % Numero di frame totali
+
+t = linspace(0, n_cycles*T, n_frames);  % tempo continuo
+
+for k = 1:length(t)
+    if ishandle(h1)
+        w1 = modes_shapes(mode,:) * cos(2*pi*f(i_nat(mode)) * t(k));  % uso 2πf per l'argomento del coseno
+        h1.YData = w1;
+        pause(T/n_frames);
+    else
+        return
+    end
+end
 
 
 %% Transfer Function
@@ -158,7 +158,7 @@ modes_shapes = modes_shapes ./ normaliz;  % Normalizzazione dei modi
 % posizione acceleroemtro
 xj = 0.2; %[m]
 % posizione martellata
-xk = 0.2; %[m]
+xk = 1.2; %[m]
 
 % Trova l'indice di xj nel vettore x
 [~, pos_xj] = min(abs(x - xj));
