@@ -2,7 +2,7 @@ clear all
 close all
 clc
 
-%% BEAM
+%% BEAM 
 %% Definition of the mechanical properties of the system
 
 h = 0.008;               % thickness [m]
