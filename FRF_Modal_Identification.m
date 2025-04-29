@@ -334,8 +334,8 @@ findPeaksCallback();
     end
 
     % === Salva FRF (ampiezza e fase) ===
-    frfData = table(f_range(:), abs(FRF_range(:)), angle(FRF_range(:)), ...
-        'VariableNames', {'Frequenza_Hz', 'Ampiezza_FRF', 'Fase_FRF_rad'});
+    frfData = table(f_range(:), FRF_range(:), ...
+        'VariableNames', {'Frequenza_Hz', 'FRF'});
 
     % Percorsi file FRF
     frfCSVname = fullfile(resultsDir, 'FRF_SDOF_Optimize.csv');
