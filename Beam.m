@@ -17,20 +17,19 @@ m = M/L; % mass [Kg]
 xsi = 0.01;             % smorzamento adimensionale
 
 % Setting the frequency range
-fmax=200;                        %[Hz]
+fmax = 200;                        %[Hz]
 % resolutions
 n_points = 10000; 
 % create frequency vectors
 f=linspace(0,fmax,n_points);    % [Hz]
 omega=2*pi*f;                   %[rad/s]
-% Setting the space domain along the beam
-x=linspace(0,L,n_points);
+
 
 %% Calculation
 % Building the matrix of the coefficients from the BCs for a cantilever
 % beam
-H=@(omega) [            1                                   0                               1                               0    ;
-                        0                                   1                               0                               1    ;
+H=@(omega) [            1                                       0                                           1                                           0    ;
+                        0                                       1                                           0                                           1    ;
               -cos(L*(m*omega^2/(E*J))^(1/4))        -sin(L*(m*omega^2/(E*J))^(1/4))            cosh(L*(m*omega^2/(E*J))^(1/4))             sinh(L*(m*omega^2/(E*J))^(1/4));
               sin(L*(m*omega^2/(E*J))^(1/4))         -cos(L*(m*omega^2/(E*J))^(1/4))            sinh(L*(m*omega^2/(E*J))^(1/4))             cosh(L*(m*omega^2/(E*J))^(1/4));];
 
@@ -74,7 +73,7 @@ plot(f(i_nat),abs(dets(i_nat)),'or')
 
 % inizializzo la matrice dove in ogni colonna metterò i modi per diverse
 % frequenze proprie
-C_hat = zeros(4, length(i_nat)); 
+X_hat = zeros(4, length(i_nat)); 
 
 % Salvo i valori dei coefficienti quando omega è pari alla frequenza
 % propria (in pratica salvo i modi) nella matrice C_hat
@@ -87,37 +86,36 @@ for i_mode = 1:length(i_nat)
     
     % estraggo la parte ridotta della matrice Hi (2:4, 2:4)
     Hi_hat = Hi(2:4, 2:4);  % 3x3 matrix
-    Ei_hat = Hi(2:4, 1);    % 3x1 vector
+    Ni_hat = Hi(2:4, 1);    % 3x1 vector
     
-    % Risolvo il sistema Hi_hat * Ci_hat = -Ei_hat
-    % Trovo i modi di vibrazione per la frequenza propria
-    Ci_hat = [1; -Hi_hat\Ei_hat];  % Il primo componente è 1 e gli altri sono risolti
+    % Risolvo il sistema Hi_hat * Xi_hat = -Ni_hat
+    % Trovo il vettore del modo di vibrare e lo aggiungo nella matrce dei modi
+    X_hat(:, i_mode) = [1; -Hi_hat\Ni_hat];  % Il primo componente è 1 e gli altri sono risolti
     
-    % Salvo il vettore dei modi nella matrice C_hat
-    C_hat(:, i_mode) = Ci_hat;
 end
 
 %% Modal shapes computation
 % Distretizzo l'asse della lunghezza della trave
-x = linspace(0, L, 1000);  % vettore di lunghezza della trave
+x = linspace(0, L, n_points);  % vettore di lunghezza della trave
 dx = x(2);  % distanza fra i punti
 
 % Calcolo dei modi per ogni frequenza propria
-phi = zeros(length(i_nat), length(x));  % inizializzo la matrice dei modi
+modes_shapes = zeros(length(i_nat), length(x));  % inizializzo la matrice dei modi
+
 for i_mode = 1:length(i_nat)
     omega_i = omega(i_nat(i_mode));  % Frequenza propria
     gamma_i = (L * m * omega_i^2 / (E * J))^(1/4);  % parametro di vibrazione gamma_i
     
     % Calcolo del modo di vibrazione per ogni punto dell'asse x
-    phi(i_mode, :) = C_hat(1, i_mode) * cos(gamma_i * x) ...
-                    + C_hat(2, i_mode) * sin(gamma_i * x) ...
-                    + C_hat(3, i_mode) * cosh(gamma_i * x) ...
-                    + C_hat(4, i_mode) * sinh(gamma_i * x);
+    modes_shapes(i_mode, :) = X_hat(1, i_mode) * cos(gamma_i * x) ...
+                    + X_hat(2, i_mode) * sin(gamma_i * x) ...
+                    + X_hat(3, i_mode) * cosh(gamma_i * x) ...
+                    + X_hat(4, i_mode) * sinh(gamma_i * x);
 end
 
 % Normalizzo i modi per far sì che il massimo valore sia 1
-normaliz = max(abs(phi), [], 2);  % Normalizzo per ciascun modo (per ogni riga)
-phi = phi ./ normaliz;  % Normalizzazione dei modi
+normaliz = max(abs(modes_shapes), [], 2);  % Normalizzo per ciascun modo (per ogni riga)
+modes_shapes = modes_shapes ./ normaliz;  % Normalizzazione dei modi
 
 % Se vuoi normalizzare ogni modo separatamente per avere il primo valore pari a 1:
 % phi = phi ./ phi(:,1);  % Normalizza ogni modo rispetto al primo valore
@@ -125,35 +123,42 @@ phi = phi ./ normaliz;  % Normalizzazione dei modi
 
 
 %% Animation
-% Seleziona il modo di cui vuoi fare l'animazione
-mode = 1;
+% mode = 1;
+% 
+% colors_p = lines(length(i_nat));  % palette colori
+% 
+% figure('Position', [100, 100, 1200, 500]); hold on; grid on;
+% title(['Mode ', num2str(mode)])
+% plot(x, modes_shapes(mode,:), ':k', 'LineWidth', 2)
+% h1 = plot(x, zeros(size(x)), 'LineWidth', 2, 'color', colors_p(mode, :));
+% xlabel('Posizione [m]')
+% ylabel('Deformazione (modale)')
+% ylim([-1, 1] * max(abs(modes_shapes(mode,:))) * 1.1)
+% 
+% % Parametri dell’animazione
+% T = 1 / f(i_nat(mode));     % Periodo reale della frequenza naturale
+% n_cycles = 4;               % Numero di cicli da animare
+% n_frames = 1000;             % Numero di frame totali
+% 
+% t = linspace(0, n_cycles*T, n_frames);  % tempo continuo
+% 
+% for k = 1:length(t)
+%     if ishandle(h1)
+%         w1 = modes_shapes(mode,:) * cos(2*pi*f(i_nat(mode)) * t(k));  % uso 2πf per l'argomento del coseno
+%         h1.YData = w1;
+%         pause(T/n_frames);
+%     else
+%         return
+%     end
+% end
 
-% Se i colori non sono definiti, possiamo crearne uno
-colors_p = lines(length(i_nat));  % Usa una palette di colori predefiniti
-
-figure, hold on, grid on
-title(['Mode ', num2str(mode)])
-plot(x, phi(mode,:), ':k', 'LineWidth', 2)
-h1 = plot(x, zeros(size(x)), 'LineWidth', 2, 'color', colors_p(mode, :));
-
-% Crea l'animazione
-for t = linspace(0, 5 / f(i_nat(mode)), 400)
-    if ishandle(h1)
-        % Calcola la forma modale oscillante nel tempo (sinusoidale)
-        w1 = phi(mode,:) * cos(omega(i_nat(mode)) * t);  % oscillazione coseno
-        h1.YData = w1;  % Aggiorna i dati Y della curva
-        pause(0.005)  % Pausa per il frame dell'animazione
-    else
-        return
-    end
-end
 
 %% Transfer Function
 
 % posizione acceleroemtro
 xj = 0.2; %[m]
 % posizione martellata
-xk = 1.2; %[m]
+xk = 0.2; %[m]
 
 % Trova l'indice di xj nel vettore x
 [~, pos_xj] = min(abs(x - xj));
@@ -166,23 +171,28 @@ modal_mass = zeros(1,length(i_nat));
 
 % modal mass calculation for every mode
 for i = 1:length(i_nat)
-    modal_mass(i,1) = m * trapz(phi(i,:).^2,x);
+    modal_mass(i,1) = m * trapz(x,modes_shapes(i,:).^2);
 end
 
-% omega vector
-w = f * 2 * pi;
 
 % transfer function initialization
-FRF = zeros(1,length(w));
+FRF = zeros(1,length(omega));
 
 % transfer function calculation
-for k = 1:length(w)
+for k = 1:length(omega)
     FRF(k) = 0; % inizializza a zero
     for i = 1:length(i_nat)
-        FRF(k) = FRF(k) + ( ( phi(i,pos_xj) * phi(i,pos_xk) ) / modal_mass(i) ) / ...
-                     ( -w(k)^2 + 2i * xsi * w(k) * omega(i_nat(i)) + omega(i_nat(i))^2 );
+        FRF(k) = FRF(k) + ( ( modes_shapes(i,pos_xj) * modes_shapes(i,pos_xk) ) / modal_mass(i) ) / ...
+                     ( -omega(k)^2 + 2i * xsi * omega(k) * omega(i_nat(i)) + omega(i_nat(i))^2 );
     end
 end
+
+% % transfer function calculation for single unit impulse force
+% for i = 1:length(i_nat)
+%     num = modes_shapes(i, pos_xj) * modes_shapes(i, pos_xk);
+%     den = -omega.^2 + 2i * xsi * omega * omega(i_nat(i)) + omega(i_nat(i))^2;
+%     FRF = FRF + (num / modal_mass(i)) ./ den;
+% end
 
 %% FRF plot 
 % Calcolo ampiezza e fase della FRF
@@ -212,24 +222,20 @@ xlim([0 max(f)]);
 
 %% Export FRF (numero complesso) con nome file in base alla posizione
 
-% Posizione accelerometro e martellata
-xj = 0.2;  % [m]
-xk = 1.2;  % [m]
-
 % Crea la cartella "Results" se non esiste
 if ~exist('Results', 'dir')
     mkdir('Results');
 end
 
 % Determina nome file in base alle posizioni
-if abs(xj - xk) < 1e-6  % tolleranza per confronti floating point
+if abs(xj - xk) < 1e-6
     suffix = sprintf('collocata_in_%.2fm', xj);
 else
     suffix = sprintf('xj_%.2fm_xk_%.2fm', xj, xk);
 end
 
-% Sostituisci il punto con la virgola nel nome file (opzionale, stile EU)
-suffix = strrep(suffix, '.', ',');
+% Rimuovi caratteri non validi per nome file
+suffix = strrep(suffix, '.', '_');  % cambia punto in underscore
 
 % Crea una matrice con frequenza [Hz], parte reale e parte immaginaria
 FRF_data = [f.' real(FRF).' imag(FRF).'];
@@ -241,7 +247,7 @@ mat_path = fullfile('Results', ['FRF_export_' suffix '.mat']);
 % Salva su file CSV
 writematrix(FRF_data, csv_path);
 
-% Salva anche su file .mat (mantiene il numero complesso)
+% Salva anche su file .mat
 save(mat_path, 'f', 'FRF');
 
 % Messaggio di conferma
