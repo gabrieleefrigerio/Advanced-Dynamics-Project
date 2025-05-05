@@ -71,7 +71,7 @@ xlabel(ax, 'Frequenza (Hz)');
 ylabel(ax, '|FRF|');
 grid(ax, 'on'); grid(ax, 'minor');
 
-peaks = []; locs = [];
+peaks = []; locs = []; locs_pos = [];
 
 btnFind.ButtonPushedFcn = @(~,~) findPeaksCallback();
 btnProceedToFit.ButtonPushedFcn = @(~,~) startFitting();
@@ -89,9 +89,11 @@ findPeaksCallback();
         cla(ax);
         semilogy(ax, f_range, abs(FRF_range)); hold(ax, 'on');
         [pks, locsFound] = findpeaks(abs(FRF_range), f_range, 'MinPeakHeight', minAmp);
+        [~, locsPos] = findpeaks(abs(FRF_range), 'MinPeakHeight', minAmp);
         semilogy(ax, locsFound, pks, 'ro', 'MarkerFaceColor', 'r');
         peaks = pks;
         locs = locsFound;
+        locs_pos = locsPos;
         legend(ax, 'FRF', 'Picchi trovati');
         hold(ax, 'off');
     end
@@ -197,15 +199,45 @@ findPeaksCallback();
         function runOptimization()
             % vettore dei parametri da ottimizzare
             p0 = [fieldf0.Value*2*pi, fieldXi.Value, fieldA.Value, fieldRh.Value, fieldRl.Value];
+            
+            % === Selezione dinamica dell'intervallo attorno al picco ===
+            
+            % Frequenza centrale del picco corrente
+            f_central = locs(modeIndex);
+            
+            % Calcolo della larghezza della finestra: metà distanza tra picchi adiacenti
+            if modeIndex == 1
+                % Primo picco: guarda solo verso il prossimo
+                df = (locs(2) - locs(1)) / 15;
+            elseif modeIndex == length(locs)
+                % Ultimo picco: guarda solo verso il precedente
+                df = (locs(end) - locs(end-1)) / 15;
+            else
+                % Picchi centrali: usa la media tra le due distanze adiacenti
+                df1 = locs(modeIndex) - locs(modeIndex - 1);
+                df2 = locs(modeIndex + 1) - locs(modeIndex);
+                df = min(df1, df2) / 15; % più conservativo
+            end
+            
+            % Estendi di un piccolo fattore (es. 20%) per sicurezza
+            f_low = f_central -  df;
+            f_high = f_central +  df;
+            
+            % Trova gli indici nell'intervallo
+            idx_min = find(f_range >= f_low, 1, 'first');
+            idx_max = find(f_range <= f_high, 1, 'last');
+            
+            % Fallback agli estremi se gli indici non vengono trovati
+            if isempty(idx_min), idx_min = 1; end
+            if isempty(idx_max), idx_max = length(f_range); end
+            
+            % Vettori finali da usare
+            omega_vec = 2 * pi * f_range(idx_min:idx_max);
+            G_exp = FRF_range(idx_min:idx_max);
 
-            % vettore delle omega nel range selezionato
-            omega_vec = 2*pi*f_range;
-
-            % funzione di trasferimento sperimentale nel range selezionato
-            G_exp = FRF_range;
 
             % funzione di trasferimento numerica in formato anonymous
-            modelFun = @(p, omega_vec) p(3)./ (-omega_vec.^2 + 2j*p(2)*p(1).*omega_vec + p(1)^2) + p(4) + p(5)./omega_vec.^2;
+            modelFun = @(p, omega_vec) p(3)./ (-omega_vec.^2 + 2j*p(2)*p(1).*omega_vec + p(1)^2) + p(4) + ( p(5)./omega_vec.^2);
             % funzione con parametri scalati
             scale = [1, 1, 1, 1e-3, 1e-6];
             modelFun_scaled = @(p, omega_vec) modelFun(p .* scale, omega_vec);
@@ -229,18 +261,18 @@ findPeaksCallback();
             % Aggiorno il plot
             % ---- Ampiezza ----
             cla(axAmp);
-            semilogy(axAmp, f_range, abs(FRF_range), 'b'); hold(axAmp, 'on'); grid(axAmp, 'minor');% grid(axAmp, 'on');
+            semilogy(axAmp, f_range(idx_min:idx_max), abs(G_exp), 'b'); hold(axAmp, 'on'); grid(axAmp, 'minor');% grid(axAmp, 'on');
             xlim(axAmp,[fieldf0.Value-50 fieldf0.Value+50]) % plotto il grafico solo nell'intorno del picco
-            semilogy(axAmp, f_range, abs(G_fit), 'r--', 'LineWidth', 1.5);
+            semilogy(axAmp, f_range(idx_min:idx_max), abs(G_fit), 'r--', 'LineWidth', 1.5);
             legend(axAmp, 'FRF', 'Fit');
             grid(axAmp, 'minor'); %grid(axAmp, 'on');
             hold(axAmp, 'off');
 
             % ---- Fase ----
             cla(axPhase);
-            plot(axPhase, f_range, angle(FRF_range), 'b'); hold(axPhase, 'on');  grid(axPhase, 'minor'); % grid(axPhase, 'on');
+            plot(axPhase, f_range(idx_min:idx_max), angle(G_exp), 'b'); hold(axPhase, 'on');  grid(axPhase, 'minor'); % grid(axPhase, 'on');
             xlim(axPhase,[fieldf0.Value-50 fieldf0.Value+50]) % plotto il grafico solo nell'intorno del picco
-            plot(axPhase, f_range, angle(G_fit), 'r--', 'LineWidth', 1.5);
+            plot(axPhase, f_range(idx_min:idx_max), angle(G_fit), 'r--', 'LineWidth', 1.5);
             legend(axPhase, 'FRF', 'Fit');
             grid(axPhase, 'minor'); %grid(axPhase, 'on');
             hold(axPhase, 'off');
