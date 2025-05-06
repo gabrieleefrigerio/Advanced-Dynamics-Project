@@ -21,8 +21,8 @@ fmax = 200;                        %[Hz]
 % resolutions
 n_points = 10000; 
 % create frequency vectors
-f=linspace(0,fmax,n_points);    % [Hz]
-omega=2*pi*f;                   %[rad/s]
+freq=linspace(0,fmax,n_points);    % [Hz]
+omega=2*pi*freq;                   %[rad/s]
 
 
 %% Calculation
@@ -42,7 +42,7 @@ end
 
 % plot determinant
 figure, box on
-semilogy(f,abs(dets),'-b')
+semilogy(freq,abs(dets),'-b')
 hold on;
 grid on;
 grid minor;
@@ -63,9 +63,9 @@ for i=2:length(dets)-1
 end
 % stampo a schermo le frequenze proprie
 fprintf('Natural frequencies [Hz]:\n ');
-disp(f(i_nat));
+disp(freq(i_nat));
 % aggiungo nel plot precedente dei pallini dove ho le frequenze proprie
-plot(f(i_nat),abs(dets(i_nat)),'or')
+plot(freq(i_nat),abs(dets(i_nat)),'or')
 
 %% Solving the reduced system
 % Ora sappiamo i valori di omega (frequenze proprie) per cui il sistema è singolare, 
@@ -136,7 +136,7 @@ ylabel('Deformazione (modale)')
 ylim([-1, 1] * max(abs(modes_shapes(mode,:))) * 1.1)
 
 % Parametri dell’animazione
-T = 1 / f(i_nat(mode));     % Periodo reale della frequenza naturale
+T = 1 / freq(i_nat(mode));     % Periodo reale della frequenza naturale
 n_cycles = 4;               % Numero di cicli da animare
 n_frames = 1000;             % Numero di frame totali
 
@@ -144,7 +144,7 @@ t = linspace(0, n_cycles*T, n_frames);  % tempo continuo
 
 for k = 1:length(t)
     if ishandle(h1)
-        w1 = modes_shapes(mode,:) * cos(2*pi*f(i_nat(mode)) * t(k));  % uso 2πf per l'argomento del coseno
+        w1 = modes_shapes(mode,:) * cos(2*pi*freq(i_nat(mode)) * t(k));  % uso 2πf per l'argomento del coseno
         h1.YData = w1;
         pause(T/n_frames);
     else
@@ -153,102 +153,99 @@ for k = 1:length(t)
 end
 
 
+
+
 %% Transfer Function
 
-% posizione acceleroemtro
-xj = 1.2; %[m]
+% posizioni acceleroemtri
+xj = [0.3, 0.6, 0.9, 1.2]; %[m]
 % posizione martellata
 xk = 1.2; %[m]
 
-% Trova l'indice di xj nel vettore x
-[~, pos_xj] = min(abs(x - xj));
+% inizializzo la matrice da esportare
+frf = zeros(length(freq),length(xj));
 
-% Trova l'indice di xk nel vettore x
-[~, pos_xk] = min(abs(x - xk));
-
-% modal mass vector initialization
-modal_mass = zeros(1,length(i_nat));
-
-% modal mass calculation for every mode
-for i = 1:length(i_nat)
-    modal_mass(i,1) = m * trapz(x,modes_shapes(i,:).^2);
-end
-
-
-% transfer function initialization
-FRF = zeros(1,length(omega));
-
-% transfer function calculation
-for k = 1:length(omega)
-    FRF(k) = 0; % inizializza a zero
+for ii = 1: length(xj)
+    % Trova l'indice di xj nel vettore x
+    [~, pos_xj] = min(abs(x - xj(ii)));
+    
+    % Trova l'indice di xk nel vettore x
+    [~, pos_xk] = min(abs(x - xk));
+    
+    % modal mass vector initialization
+    modal_mass = zeros(1,length(i_nat));
+    
+    % modal mass calculation for every mode
     for i = 1:length(i_nat)
-        FRF(k) = FRF(k) + ( ( modes_shapes(i,pos_xj) * modes_shapes(i,pos_xk) ) / modal_mass(i) ) / ...
-                     ( -omega(k)^2 + 2i * xsi * omega(k) * omega(i_nat(i)) + omega(i_nat(i))^2 );
+        modal_mass(i,1) = m * trapz(x,modes_shapes(i,:).^2);
     end
+    
+    
+    % transfer function initialization
+    FRF = zeros(1,length(omega));
+    
+    % transfer function calculation
+    for k = 1:length(omega)
+        FRF(k) = 0; % inizializza a zero
+        for i = 1:length(i_nat)
+            FRF(k) = FRF(k) + ( ( modes_shapes(i,pos_xj) * modes_shapes(i,pos_xk) ) / modal_mass(i) ) / ...
+                         ( -omega(k)^2 + 2i * xsi * omega(k) * omega(i_nat(i)) + omega(i_nat(i))^2 );
+        end
+    end
+
+    % salvo la FRF nella matrice da esoportare
+    frf(:,ii) = FRF';
+    
+    % % transfer function calculation for single unit impulse force
+    % for i = 1:length(i_nat)
+    %     num = modes_shapes(i, pos_xj) * modes_shapes(i, pos_xk);
+    %     den = -omega.^2 + 2i * xsi * omega * omega(i_nat(i)) + omega(i_nat(i))^2;
+    %     FRF = FRF + (num / modal_mass(i)) ./ den;
+    % end
+    
+    % %% FRF plot 
+    % % Calcolo ampiezza e fase della FRF
+    % FRF_amp = abs(FRF);             % modulo
+    % FRF_phase = angle(FRF);         % fase in radianti
+    % 
+    % % Crea la figura con due subplot
+    % figure;
+    % 
+    % % ---- Ampiezza (semilogaritmica) ----
+    % subplot(2,1,1);
+    % semilogy(f, FRF_amp, 'b', 'LineWidth', 2);
+    % grid on;
+    % xlabel('Frequenza [Hz]');
+    % ylabel('|G(j\omega)|');
+    % title('Funzione di Trasferimento - Ampiezza');
+    % xlim([0 max(f)]);
+    % 
+    % % ---- Fase ----
+    % subplot(2,1,2);
+    % plot(f, FRF_phase, 'r', 'LineWidth', 2);
+    % grid on;
+    % xlabel('Frequenza [Hz]');
+    % ylabel('Fase [rad]');
+    % title('Funzione di Trasferimento - Fase');
+    % xlim([0 max(f)]);
+    
 end
-
-% % transfer function calculation for single unit impulse force
-% for i = 1:length(i_nat)
-%     num = modes_shapes(i, pos_xj) * modes_shapes(i, pos_xk);
-%     den = -omega.^2 + 2i * xsi * omega * omega(i_nat(i)) + omega(i_nat(i))^2;
-%     FRF = FRF + (num / modal_mass(i)) ./ den;
-% end
-
-%% FRF plot 
-% Calcolo ampiezza e fase della FRF
-FRF_amp = abs(FRF);             % modulo
-FRF_phase = angle(FRF);         % fase in radianti
-
-% Crea la figura con due subplot
-figure;
-
-% ---- Ampiezza (semilogaritmica) ----
-subplot(2,1,1);
-semilogy(f, FRF_amp, 'b', 'LineWidth', 2);
-grid on;
-xlabel('Frequenza [Hz]');
-ylabel('|G(j\omega)|');
-title('Funzione di Trasferimento - Ampiezza');
-xlim([0 max(f)]);
-
-% ---- Fase ----
-subplot(2,1,2);
-plot(f, FRF_phase, 'r', 'LineWidth', 2);
-grid on;
-xlabel('Frequenza [Hz]');
-ylabel('Fase [rad]');
-title('Funzione di Trasferimento - Fase');
-xlim([0 max(f)]);
-
-%% Export FRF (numero complesso) con nome file in base alla posizione
 
 % Crea la cartella "Results" se non esiste
-if ~exist('Results', 'dir')
-    mkdir('Results');
+output_folder = 'Results\Beam Optimized\';
+if ~exist(output_folder, 'dir')
+    mkdir(output_folder);
 end
 
-% Determina nome file in base alle posizioni
-if abs(xj - xk) < 1e-6
-    suffix = sprintf('collocata_in_%.2fm', xj);
-else
-    suffix = sprintf('xj_%.2fm_xk_%.2fm', xj, xk);
-end
+% Crea un suffisso col valore della martellata (xk), ad esempio "xk_1.2m"
+suffix = sprintf('xk_%.2fm', xk);
 
-% Rimuovi caratteri non validi per nome file
-suffix = strrep(suffix, '.', '_');  % cambia punto in underscore
+% Percorso completo del file .mat con nome dinamico
+mat_path = fullfile(output_folder, ['FRF_export_' suffix '.mat']);
 
-% Crea una matrice con frequenza [Hz], parte reale e parte immaginaria
-FRF_data = [f.' real(FRF).' imag(FRF).'];
-
-% Percorsi completi dei file
-csv_path = fullfile('Results', ['FRF_export_' suffix '.csv']);
-mat_path = fullfile('Results', ['FRF_export_' suffix '.mat']);
-
-% Salva su file CSV
-writematrix(FRF_data, csv_path);
-
-% Salva anche su file .mat
-save(mat_path, 'f', 'FRF');
+% Salva il file
+save(mat_path, 'freq', 'frf');
 
 % Messaggio di conferma
-disp(['FRF esportata in: ', csv_path, ' e ', mat_path]);
+disp(['FRF esportata in: ', mat_path]);
+
