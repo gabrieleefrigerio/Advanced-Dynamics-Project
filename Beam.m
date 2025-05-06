@@ -65,7 +65,7 @@ end
 fprintf('Natural frequencies [Hz]:\n ');
 disp(freq(i_nat));
 % aggiungo nel plot precedente dei pallini dove ho le frequenze proprie
-plot(freq(i_nat),abs(dets(i_nat)),'or')
+% plot(freq(i_nat),abs(dets(i_nat)),'or')
 
 %% Solving the reduced system
 % Ora sappiamo i valori di omega (frequenze proprie) per cui il sistema è singolare, 
@@ -134,7 +134,7 @@ h1 = plot(x, zeros(size(x)), 'LineWidth', 2, 'color', colors_p(mode, :));
 xlabel('Posizione [m]')
 ylabel('Deformazione (modale)')
 ylim([-1, 1] * max(abs(modes_shapes(mode,:))) * 1.1)
-
+% 
 % Parametri dell’animazione
 T = 1 / freq(i_nat(mode));     % Periodo reale della frequenza naturale
 n_cycles = 4;               % Numero di cicli da animare
@@ -158,7 +158,7 @@ end
 %% Transfer Function
 
 % posizioni acceleroemtri
-xj = [0.3, 0.6, 0.9, 1.2]; %[m]
+xj = [ 0.2]; %[m]
 % posizione martellata
 xk = 1.2; %[m]
 
@@ -194,7 +194,7 @@ for ii = 1: length(xj)
     end
 
     % salvo la FRF nella matrice da esoportare
-    frf(:,ii) = FRF';
+    frf(:,ii) = FRF.';
     
     % % transfer function calculation for single unit impulse force
     % for i = 1:length(i_nat)
@@ -203,31 +203,31 @@ for ii = 1: length(xj)
     %     FRF = FRF + (num / modal_mass(i)) ./ den;
     % end
     
-    % %% FRF plot 
-    % % Calcolo ampiezza e fase della FRF
-    % FRF_amp = abs(FRF);             % modulo
-    % FRF_phase = angle(FRF);         % fase in radianti
-    % 
-    % % Crea la figura con due subplot
-    % figure;
-    % 
-    % % ---- Ampiezza (semilogaritmica) ----
-    % subplot(2,1,1);
-    % semilogy(f, FRF_amp, 'b', 'LineWidth', 2);
-    % grid on;
-    % xlabel('Frequenza [Hz]');
-    % ylabel('|G(j\omega)|');
-    % title('Funzione di Trasferimento - Ampiezza');
-    % xlim([0 max(f)]);
-    % 
-    % % ---- Fase ----
-    % subplot(2,1,2);
-    % plot(f, FRF_phase, 'r', 'LineWidth', 2);
-    % grid on;
-    % xlabel('Frequenza [Hz]');
-    % ylabel('Fase [rad]');
-    % title('Funzione di Trasferimento - Fase');
-    % xlim([0 max(f)]);
+    %% FRF plot 
+    % Calcolo ampiezza e fase della FRF
+    FRF_amp = abs(FRF);             % modulo
+    FRF_phase = angle(FRF);         % fase in radianti
+
+    % Crea la figura con due subplot
+    figure;
+
+    % ---- Ampiezza (semilogaritmica) ----
+    subplot(2,1,1);
+    semilogy(freq, FRF_amp, 'b', 'LineWidth', 2);
+    grid on;
+    xlabel('Frequenza [Hz]');
+    ylabel('|G(j\omega)|');
+    title('Funzione di Trasferimento - Ampiezza');
+    xlim([0 max(freq)]);
+
+    % ---- Fase ----
+    subplot(2,1,2);
+    plot(freq, FRF_phase, 'r', 'LineWidth', 2);
+    grid on;
+    xlabel('Frequenza [Hz]');
+    ylabel('Fase [rad]');
+    title('Funzione di Trasferimento - Fase');
+    xlim([0 max(freq)]);
     
 end
 

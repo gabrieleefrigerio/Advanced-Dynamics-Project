@@ -1,85 +1,163 @@
 function FRF_Modal_Identification()
 clc
 close all
-clear all
+clear 
 
+FRF = []; f = []; FRF_range = []; f_range = []; locs = []; minAmpField = []; ax = []; locs_idx = []; peaks = []; locs_pos = [];
+ % fieldf0 = []; fieldA = []; fieldRh = []; fieldRl = []; fieldXi = []; 
 % ===IMPORT FRF ===
 [filename, pathname] = uigetfile('*.mat', 'Seleziona un file MAT');
 data = load(fullfile(pathname, filename)); % caricato dentro 'data'
 
-% Ora puoi accedere a FRF come:
-FRF = data.FRF;
-f = data.f;
+% Estrai numero massimo accelerometri
+    num_acc = size(data.frf, 2);
 
-%% CREAZIONE FRF DI PROVA
-% % Definizione delle frequenze proprie (poche, ben distanziate)
-% f_nat = [30, 160, 300];       % Hz
-% omega_nat = 2 * pi * f_nat;
-% 
-% % Parametri base
-% f = linspace(0.01, max(f_nat)+300, 5000);   % frequenze da 0 a 200 Hz, alta risoluzione
-% omega = 2 * pi * f;
-% 
-% % Smorzamento molto basso (adimensionale)
-% xsi = 0.0002;
-% 
-% % Inizializzo FRF
-% FRF = zeros(size(f));
-% 
-% % Somma di contributi modali
-% for i = 1:length(f_nat)
-%     FRF = FRF + (1 ./ (omega_nat(i)^2 - omega.^2 + 2j*xsi*omega_nat(i)*omega));
-% end
+    % === CREA GUI PER SCELTA ACC ===
+    fig = uifigure('Name', 'Seleziona Accelerometro', 'Position', [500 400 500 200]);
+
+    % Etichetta centrata
+    uilabel(fig, ...
+        'Text', sprintf('Numero massimo accelerometri disponibili: %d', num_acc), ...
+        'Position', [100 140 300 30], ...
+        'HorizontalAlignment', 'center', ...
+        'FontWeight', 'bold');
+
+    % Dropdown centrato
+    dd = uidropdown(fig, ...
+        'Items', arrayfun(@(i) sprintf('Accelerometro %d', i), 1:num_acc, 'UniformOutput', false), ...
+        'Position', [100 90 300 30]);
+
+    % Bottone per confermare selezione
+    uibutton(fig, ...
+        'Text', 'Conferma', ...
+        'Position', [200 40 100 30], ...
+        'ButtonPushedFcn', @(btn, ~) confermaCallback());
+
+
+
 
 
 %% GUI PER SCEGLIERE SE SELEZIONARE RANGE
-choice = questdlg('Vuoi selezionare un range specifico della FRF?', ...
-    'Selezione range', 'Sì','No','No');
-
-if strcmp(choice, 'Sì')
-    figure('Name', 'Seleziona Range FRF', 'Position', [100 100 1600 900]);
-    semilogy(f, abs(FRF)); grid on; grid minor;
-    title('Seleziona due punti per il range');
-    [xsel, ~] = ginput(2); close;
-    fmin = min(xsel); fmax = max(xsel);
-else
-    fmax = max(f);
-    if min(f) == 0
-        fmin = realmin;
-    else
-        fmin = min(f); 
-    end
-end
-
-idx = f >= fmin & f <= fmax;
-f_range = f(idx);
-FRF_range = FRF(idx);
-
-%% GUI PER SELEZIONARE PICCHI
-fig = uifigure('Name', 'Peak Finder', 'Position', [100 100 900 550]);
-
-uilabel(fig, 'Text', 'Ampiezza minima del picco:', 'Position', [30, 430, 200, 22]);
-defaultMinAmp = round(0.15 * max(abs(FRF_range)));
-minAmpField = uieditfield(fig, 'numeric', 'Value', defaultMinAmp, 'Position', [30, 400, 150, 22]);
-
-btnFind = uibutton(fig, 'Text', 'Find Peaks', 'Position', [30, 360, 150, 30]);
-btnProceedToFit = uibutton(fig, 'Text', 'Proceed', 'Position', [30, 310, 150, 30]);
-
-ax = uiaxes(fig, 'Position', [200, 50, 670, 450]);
-title(ax, 'FRF con Picchi');
-xlabel(ax, 'Frequenza (Hz)');
-ylabel(ax, '|FRF|');
-grid(ax, 'on'); grid(ax, 'minor');
-
-peaks = []; locs = []; locs_pos = [];
-
-btnFind.ButtonPushedFcn = @(~,~) findPeaksCallback();
-btnProceedToFit.ButtonPushedFcn = @(~,~) startFitting();
-
-% Trova picchi appena parte
-findPeaksCallback();
+% choice = questdlg('Vuoi selezionare un range specifico della FRF?', ...
+%     'Selezione range', 'Sì','No','No');
+% 
+% if strcmp(choice, 'Sì')
+%     figure('Name', 'Seleziona Range FRF', 'Position', [100 100 1600 900]);
+%     semilogy(f, abs(FRF)); grid on; grid minor;
+%     title('Seleziona due punti per il range');
+%     [xsel, ~] = ginput(2); close;
+%     fmin = min(xsel); fmax = max(xsel);
+% else
+%     fmax = max(f);
+%     if min(f) == 0
+%         fmin = realmin;
+%     else
+%         fmin = min(f); 
+%     end
+% end
+% 
+% idx = f >= fmin & f <= fmax;
+% f_range = f(idx);
+% FRF_range = FRF(idx);
+% 
+% %% GUI PER SELEZIONARE PICCHI
+% fig = uifigure('Name', 'Peak Finder', 'Position', [100 100 900 550]);
+% 
+% uilabel(fig, 'Text', 'Ampiezza minima del picco:', 'Position', [30, 430, 200, 22]);
+% defaultMinAmp = round(0.15 * max(abs(FRF_range)));
+% minAmpField = uieditfield(fig, 'numeric', 'Value', defaultMinAmp, 'Position', [30, 400, 150, 22]);
+% 
+% btnFind = uibutton(fig, 'Text', 'Find Peaks', 'Position', [30, 360, 150, 30]);
+% btnProceedToFit = uibutton(fig, 'Text', 'Proceed', 'Position', [30, 310, 150, 30]);
+% 
+% ax = uiaxes(fig, 'Position', [200, 50, 670, 450]);
+% title(ax, 'FRF con Picchi');
+% xlabel(ax, 'Frequenza (Hz)');
+% ylabel(ax, '|FRF|');
+% grid(ax, 'on'); grid(ax, 'minor');
+% 
+% peaks = []; locs = []; locs_pos = [];
+% 
+% btnFind.ButtonPushedFcn = @(~,~) findPeaksCallback();
+% btnProceedToFit.ButtonPushedFcn = @(~,~) startFitting();
+% 
+% % Trova picchi appena parte
+% findPeaksCallback();
 
 %% FUNZIONE TASTO PER TORVARE I PICCHI CON NUOVO VALORE MINIMO DEL PICCO
+    function confermaCallback()
+    % Ottieni indice dell'accelerometro selezionato
+    selectedIndex = dd.Value;
+    accIndex = sscanf(selectedIndex, 'Accelerometro %d');
+
+    % Chiudi la finestra di selezione accelerometro
+    close(fig);
+
+    % Estrai FRF dell'accelerometro selezionato
+    FRF = data.frf(:, accIndex);
+    f = data.freq;
+
+    % Salva FRF e f in base workspace per accesso nel resto dello script
+    assignin('base', 'FRF', FRF);
+    assignin('base', 'f', f);
+
+  
+% Avvia selezione range (emulando la logica successiva già presente)
+    choice = questdlg('Vuoi selezionare un range specifico della FRF?', ...
+        'Selezione range', 'Sì','No','No');
+
+    if strcmp(choice, 'Sì')
+        figure('Name', 'Seleziona Range FRF', 'Position', [100 100 1600 900]);
+        semilogy(f, abs(FRF)); grid on; grid minor;
+        title('Seleziona due punti per il range');
+        [xsel, ~] = ginput(2); close;
+        fmin = min(xsel); fmax = max(xsel);
+    else
+        fmax = max(f);
+        if min(f) == 0
+            fmin = realmin;
+        else
+            fmin = min(f);
+        end
+    end
+
+    % Filtra i dati per il range selezionato
+    idx = f >= fmin & f <= fmax;
+    f_range = f(idx);
+    FRF_range = FRF(idx);
+
+    % Salva anche questi nel workspace base per uso successivo
+    assignin('base', 'f_range', f_range);
+    assignin('base', 'FRF_range', FRF_range);
+
+    % Avvia la GUI per la selezione dei picchi
+    runPeakSelectionGUI();
+end
+
+    function runPeakSelectionGUI()
+    fig = uifigure('Name', 'Peak Finder', 'Position', [100 100 900 550]);
+
+    uilabel(fig, 'Text', 'Ampiezza minima del picco:', 'Position', [30, 430, 200, 22]);
+    defaultMinAmp = round(0.15 * max(abs(FRF_range)));
+    minAmpField = uieditfield(fig, 'numeric', 'Value', defaultMinAmp, 'Position', [30, 400, 150, 22]);
+
+    btnFind = uibutton(fig, 'Text', 'Find Peaks', 'Position', [30, 360, 150, 30]);
+    btnProceedToFit = uibutton(fig, 'Text', 'Proceed', 'Position', [30, 310, 150, 30]);
+
+    ax = uiaxes(fig, 'Position', [200, 50, 670, 450]);
+    title(ax, 'FRF con Picchi');
+    xlabel(ax, 'Frequenza (Hz)');
+    ylabel(ax, '|FRF|');
+    grid(ax, 'on'); grid(ax, 'minor');
+
+
+    btnFind.ButtonPushedFcn = @(~,~) findPeaksCallback();
+    btnProceedToFit.ButtonPushedFcn = @(~,~) startFitting();
+
+    findPeaksCallback(); % Trova picchi inizialmente
+    end
+    
+    
     function findPeaksCallback()
 
         % aggiorno il valore minimo del picco preso dalla gui
@@ -134,7 +212,8 @@ findPeaksCallback();
         left_idx = find(abs(FRF_range(1:locs_idx)) <= mag_target, 1, 'last');
         right_idx = find(abs(FRF_range(locs_idx:end)) <= mag_target, 1, 'first') + locs_idx - 1;
 
-        if isempty(left_idx) || isempty(right_idx)
+
+if isempty(left_idx) || isempty(right_idx)
             xi0 = 0.01;
         else
             f1 = f_range(left_idx);
@@ -196,7 +275,7 @@ findPeaksCallback();
         % Appena apro, lancio subito l'ottimizzazione
         runOptimization();
 
-        function runOptimization()
+function runOptimization()
             % vettore dei parametri da ottimizzare
             p0 = [fieldf0.Value*2*pi, fieldXi.Value, fieldA.Value, fieldRh.Value, fieldRl.Value];
             
@@ -233,7 +312,7 @@ findPeaksCallback();
             
             % Vettori finali da usare
             omega_vec = 2 * pi * f_range(idx_min:idx_max);
-            G_exp = FRF_range(idx_min:idx_max);
+            G_exp = FRF_range(idx_min:idx_max).';
 
 
             % funzione di trasferimento numerica in formato anonymous
@@ -244,13 +323,15 @@ findPeaksCallback();
             
             % cost function da minimizzare
             residui = @(p) sum( real(G_exp - modelFun_scaled(p, omega_vec)).^2 + imag(G_exp - modelFun_scaled(p, omega_vec)).^2  );
-
+            
             % setting lsqnonlin
             opts = optimoptions('lsqnonlin','Display','off');
 
             % effettuo l'ottimizzazione
             [popt_scaled, ~] = lsqnonlin(residui, p0, [], [], opts);
+
             popt = popt_scaled .* scale;
+            
             % salvo i valori ottimizzati
             optimized = popt;
 
@@ -285,7 +366,7 @@ findPeaksCallback();
             fieldRl.Value = popt(5);
         end
 
-        %% FUNZIONE TASTO PER PROCEDERE AL OTTIMIZZAZIONE DOPO
+%% FUNZIONE TASTO PER PROCEDERE AL OTTIMIZZAZIONE DOPO
         function proceedToNext()
             if isempty(optimized)
                 runOptimization();
@@ -388,7 +469,8 @@ findPeaksCallback();
     modesCSVname = fullfile(resultsDir, 'ModeTable_FRF.csv');
     modesMATname = fullfile(resultsDir, 'ModeTable_FRF.mat');
 
-    % Salva CSV e MAT
+
+% Salva CSV e MAT
     writetable(modeTable, modesCSVname);
     save(modesMATname, 'modeTable');
 
@@ -492,7 +574,8 @@ end
             [file, path] = uiputfile({'*.mat'; '*.csv'}, 'Salva risultati');
             if isequal(file, 0), return; end
 
-            omega_vec = 2 * pi * f_range;
+
+omega_vec = 2 * pi * f_range;
             FRFdata = table(f_range.', abs(FRF_range).', abs(G_total_SDOF).', abs(G_total_MDOF).', ...
                 'VariableNames', {'Freq', 'FRF', 'SDOF', 'MDOF'});
 
