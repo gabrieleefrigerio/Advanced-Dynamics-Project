@@ -238,7 +238,7 @@ if ~exist(output_folder, 'dir')
 end
 
 % Crea un suffisso col valore della martellata (xk), ad esempio "xk_1.2m"
-suffix = sprintf('xk_%.2fm', xk);
+suffix = sprintf('co-located_%.2fm', xk);
 
 % Percorso completo del file .mat con nome dinamico
 mat_path = fullfile(output_folder, ['FRF_export_' suffix '.mat']);
