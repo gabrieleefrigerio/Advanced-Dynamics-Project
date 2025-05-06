@@ -121,19 +121,58 @@ end
 phi_matrix(:,1) = -phi_matrix(:,1);
 phi_matrix(:,3) = -phi_matrix(:,3);
 
-% Ciclo per ogni modo modale
+
+% Numero di righe e colonne
+[~, n_col] = size(phi_matrix);
+
+% Normalizza ciascuna colonna
+for col = 1:n_col
+    last_val = phi_matrix(end, col);
+    
+    % Evita la divisione per zero
+    if last_val ~= 0
+        phi_matrix(:, col) = phi_matrix(:, col) / abs(last_val);
+    else
+        warning('Ultimo valore della colonna %d è zero: normalizzazione saltata.', col);
+    end
+end
+
+% Ora phi_matrix è normalizzata rispetto all'ultimo valore di ogni colonna
+
+% Imposta layout dei subplot in base al numero di modi
+n_rows = ceil(sqrt(n_modi));
+n_cols = ceil(n_modi / n_rows);
+
+% Crea una figura unica
+figure('Name', 'Deformate Modali', 'NumberTitle', 'off', 'Color', 'w');
+
 for m = 1:n_modi
     deformata = phi_matrix(:, m);  % Deformata del modo m
     
-    % Plot della deformata del modo
-    figure('Name', ['Modo ', num2str(m)], 'NumberTitle', 'off');
-    plot(x, modes_shapes(m,:), 'b-', 'LineWidth', 1.5); hold on;
-    plot(acc_positions, deformata', 'ro', 'MarkerFaceColor', 'r');  % Posizioni reali degli accelerometri
-    xlabel('Posizione lungo la trave (m)');
-    ylabel(['Ampiezza del modo ', num2str(m)]);
-    title(['Deformata Modale - Modo ', num2str(m)]);
+    subplot(n_rows, n_cols, m);
+    
+    % Traccia l'interpolazione e i punti misurati
+    h1 = plot(x, modes_shapes(m, :), 'b-', 'LineWidth', 2); hold on;
+    h2 = plot(acc_positions, deformata', 'ro', 'MarkerFaceColor', 'r', 'MarkerSize', 6);
+
+    % Etichette e miglioramenti visivi
+    title(['Modo ', num2str(m)], 'FontWeight', 'bold');
+    xlabel('Posizione (m)', 'FontSize', 9);
+    ylabel('Ampiezza', 'FontSize', 9);
     grid on;
+    box on;
+    xlim([min(x), max(x)]);
+    ylim padded;
+    set(gca, 'FontSize', 9, 'LineWidth', 1);
+
+    % Aggiungi legenda
+    legend([h1, h2], {'Analitica', 'Punti Sperimentali'}, ...
+        'FontSize', 8, 'Location', 'best');
 end
+
+% Titolo generale
+sgtitle('Deformate Modali', 'FontSize', 14, 'FontWeight', 'bold');
+
 
 % === Funzioni di Supporto ===
 
