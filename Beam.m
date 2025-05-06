@@ -249,3 +249,21 @@ save(mat_path, 'freq', 'frf');
 % Messaggio di conferma
 disp(['FRF esportata in: ', mat_path]);
 
+
+% Crea un file di testo descrittivo delle posizioni
+txt_path = fullfile(output_folder, ['FRF_export_' suffix '_info.txt']);
+fid = fopen(txt_path, 'w');
+
+fprintf(fid, 'Informazioni sulle posizioni per il file: %s\n\n', ['FRF_export_' suffix '.mat']);
+fprintf(fid, 'Posizione forza (martellata): xk = %.3f m\n\n', xk);
+
+fprintf(fid, 'Accelerometri:\n');
+for i = 1:length(xj)
+    fprintf(fid, '  Colonna %d --> Accelerometro in xj = %.3f m\n', i, xj(i));
+end
+
+fclose(fid);
+
+% Messaggio di conferma anche per il file txt
+disp(['Informazioni di posizione esportate in: ', txt_path]);
+
