@@ -246,7 +246,7 @@ mat_path = fullfile(output_folder, ['FRF_analytical_' suffix '.mat']);
 % Salva il file
 save(mat_path, 'freq', 'frf');
 
-mode_path = fullfile(output_folder, ['PhiMatrix' suffix '.mat']);
+mode_path = fullfile(output_folder, ['PhiMatrix_' suffix '.mat']);
 save(mode_path,"modes_shapes");
 
 freq_path = fullfile(output_folder, 'freq.mat');
