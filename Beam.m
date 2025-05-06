@@ -158,7 +158,7 @@ end
 %% Transfer Function
 
 % posizioni acceleroemtri
-xj = [ 0.2]; %[m]
+xj = [ 0.2 0.5 0.8 1.2]; %[m]
 % posizione martellata
 xk = 1.2; %[m]
 
