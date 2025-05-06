@@ -232,7 +232,7 @@ for ii = 1: length(xj)
 end
 
 % Crea la cartella "Results" se non esiste
-output_folder = 'Results\Beam Optimized\';
+output_folder = 'Results\Analytic\';
 if ~exist(output_folder, 'dir')
     mkdir(output_folder);
 end
