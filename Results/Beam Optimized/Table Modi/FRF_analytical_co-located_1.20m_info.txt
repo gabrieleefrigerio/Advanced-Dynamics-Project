@@ -1,0 +1,13 @@
+Informazioni sulle posizioni per il file: FRF_analytical_co-located_1.20m.mat
+
+Posizione forza (martellata): xk = 1.200 m
+
+Accelerometri:
+  Colonna 1 --> Accelerometro in xj = 0.100 m
+  Colonna 2 --> Accelerometro in xj = 0.200 m
+  Colonna 3 --> Accelerometro in xj = 0.300 m
+  Colonna 4 --> Accelerometro in xj = 0.500 m
+  Colonna 5 --> Accelerometro in xj = 0.700 m
+  Colonna 6 --> Accelerometro in xj = 0.800 m
+  Colonna 7 --> Accelerometro in xj = 1.000 m
+  Colonna 8 --> Accelerometro in xj = 1.200 m

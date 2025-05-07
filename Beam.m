@@ -122,8 +122,8 @@ modes_shapes = modes_shapes ./ normaliz;  % Normalizzazione dei modi
 
 
 
-% Animation
-mode = 1;
+%% Animation
+mode = 2;
 
 colors_p = lines(length(i_nat));  % palette colori
 
@@ -158,7 +158,7 @@ end
 %% Transfer Function
 
 % posizioni acceleroemtri
-xj = [ 0.2 0.5 0.8 1.2]; %[m]
+xj = [ 0.1 0.2 0.3 0.5 0.7 0.8 1 1.2]; %[m]
 % posizione martellata
 xk = 1.2; %[m]
 
@@ -241,20 +241,26 @@ end
 suffix = sprintf('co-located_%.2fm', xk);
 
 % Percorso completo del file .mat con nome dinamico
-mat_path = fullfile(output_folder, ['FRF_export_' suffix '.mat']);
+mat_path = fullfile(output_folder, ['FRF_analytical_' suffix '.mat']);
 
 % Salva il file
 save(mat_path, 'freq', 'frf');
+
+mode_path = fullfile(output_folder, ['PhiMatrix_' suffix '.mat']);
+save(mode_path,"modes_shapes");
+
+freq_path = fullfile(output_folder, 'freq.mat');
+save(freq_path,"freq");
 
 % Messaggio di conferma
 disp(['FRF esportata in: ', mat_path]);
 
 
 % Crea un file di testo descrittivo delle posizioni
-txt_path = fullfile(output_folder, ['FRF_export_' suffix '_info.txt']);
+txt_path = fullfile(output_folder, ['FRF_analytical_' suffix '_info.txt']);
 fid = fopen(txt_path, 'w');
 
-fprintf(fid, 'Informazioni sulle posizioni per il file: %s\n\n', ['FRF_export_' suffix '.mat']);
+fprintf(fid, 'Informazioni sulle posizioni per il file: %s\n\n', ['FRF_analytical_' suffix '.mat']);
 fprintf(fid, 'Posizione forza (martellata): xk = %.3f m\n\n', xk);
 
 fprintf(fid, 'Accelerometri:\n');
