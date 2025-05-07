@@ -166,7 +166,7 @@ for m = 1:n_modi
     set(gca, 'FontSize', 9, 'LineWidth', 1);
 
     % Aggiungi legenda
-    legend([h1, h2], {'Analitica', 'Punti Sperimentali'}, ...
+    legend([h1, h2], {'Analitica', 'Punti Fittati'}, ...
         'FontSize', 8, 'Location', 'best');
 end
 

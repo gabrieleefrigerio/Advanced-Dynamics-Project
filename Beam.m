@@ -123,34 +123,34 @@ modes_shapes = modes_shapes ./ normaliz;  % Normalizzazione dei modi
 
 
 %% Animation
-mode = 2;
-
-colors_p = lines(length(i_nat));  % palette colori
-
-figure('Position', [100, 100, 1200, 500]); hold on; grid on;
-title(['Mode ', num2str(mode)])
-plot(x, modes_shapes(mode,:), ':k', 'LineWidth', 2)
-h1 = plot(x, zeros(size(x)), 'LineWidth', 2, 'color', colors_p(mode, :));
-xlabel('Posizione [m]')
-ylabel('Deformazione (modale)')
-ylim([-1, 1] * max(abs(modes_shapes(mode,:))) * 1.1)
+% mode = 2;
 % 
-% Parametri dell’animazione
-T = 1 / freq(i_nat(mode));     % Periodo reale della frequenza naturale
-n_cycles = 4;               % Numero di cicli da animare
-n_frames = 1000;             % Numero di frame totali
-
-t = linspace(0, n_cycles*T, n_frames);  % tempo continuo
-
-for k = 1:length(t)
-    if ishandle(h1)
-        w1 = modes_shapes(mode,:) * cos(2*pi*freq(i_nat(mode)) * t(k));  % uso 2πf per l'argomento del coseno
-        h1.YData = w1;
-        pause(T/n_frames);
-    else
-        return
-    end
-end
+% colors_p = lines(length(i_nat));  % palette colori
+% 
+% figure('Position', [100, 100, 1200, 500]); hold on; grid on;
+% title(['Mode ', num2str(mode)])
+% plot(x, modes_shapes(mode,:), ':k', 'LineWidth', 2)
+% h1 = plot(x, zeros(size(x)), 'LineWidth', 2, 'color', colors_p(mode, :));
+% xlabel('Posizione [m]')
+% ylabel('Deformazione (modale)')
+% ylim([-1, 1] * max(abs(modes_shapes(mode,:))) * 1.1)
+% % 
+% % Parametri dell’animazione
+% T = 1 / freq(i_nat(mode));     % Periodo reale della frequenza naturale
+% n_cycles = 4;               % Numero di cicli da animare
+% n_frames = 1000;             % Numero di frame totali
+% 
+% t = linspace(0, n_cycles*T, n_frames);  % tempo continuo
+% 
+% for k = 1:length(t)
+%     if ishandle(h1)
+%         w1 = modes_shapes(mode,:) * cos(2*pi*freq(i_nat(mode)) * t(k));  % uso 2πf per l'argomento del coseno
+%         h1.YData = w1;
+%         pause(T/n_frames);
+%     else
+%         return
+%     end
+% end
 
 
 
@@ -159,77 +159,152 @@ end
 
 % posizioni acceleroemtri
 xj = [ 0.1 0.2 0.3 0.5 0.7 0.8 1 1.2]; %[m]
+
 % posizione martellata
 xk = 1.2; %[m]
 
 % inizializzo la matrice da esportare
 frf = zeros(length(freq),length(xj));
 
-for ii = 1: length(xj)
-    % Trova l'indice di xj nel vettore x
+% for ii = 1: length(xj)
+%     % Trova l'indice di xj nel vettore x
+%     [~, pos_xj] = min(abs(x - xj(ii)));
+% 
+%     % Trova l'indice di xk nel vettore x
+%     [~, pos_xk] = min(abs(x - xk));
+% 
+%     % modal mass vector initialization
+%     modal_mass = zeros(1,length(i_nat));
+% 
+%     % modal mass calculation for every mode
+%     for i = 1:length(i_nat)
+%         modal_mass(i,1) = m * trapz(x,modes_shapes(i,:).^2);
+%     end
+% 
+% 
+%     % transfer function initialization
+%     FRF = zeros(1,length(omega));
+% 
+%     % transfer function calculation
+%     for k = 1:length(omega)
+%         FRF(k) = 0; % inizializza a zero
+%         for i = 1:length(i_nat)
+%             FRF(k) = FRF(k) + ( ( modes_shapes(i,pos_xj) * modes_shapes(i,pos_xk) ) / modal_mass(i) ) / ...
+%                          ( -omega(k)^2 + 2i * xsi * omega(k) * omega(i_nat(i)) + omega(i_nat(i))^2 );
+%         end
+%     end
+% 
+%     % salvo la FRF nella matrice da esoportare
+%     frf(:,ii) = FRF.';
+% 
+%     % % transfer function calculation for single unit impulse force
+%     % for i = 1:length(i_nat)
+%     %     num = modes_shapes(i, pos_xj) * modes_shapes(i, pos_xk);
+%     %     den = -omega.^2 + 2i * xsi * omega * omega(i_nat(i)) + omega(i_nat(i))^2;
+%     %     FRF = FRF + (num / modal_mass(i)) ./ den;
+%     % end
+% 
+%     %% FRF plot 
+%     % Calcolo ampiezza e fase della FRF
+%     FRF_amp = abs(FRF);             % modulo
+%     FRF_phase = angle(FRF);         % fase in radianti
+% 
+%     % Crea la figura con due subplot
+%     figure;
+% 
+%     % ---- Ampiezza (semilogaritmica) ----
+%     subplot(2,1,1);
+%     semilogy(freq, FRF_amp, 'b', 'LineWidth', 2);
+%     grid on;
+%     xlabel('Frequenza [Hz]');
+%     ylabel('|G(j\omega)|');
+%     title('Funzione di Trasferimento - Ampiezza');
+%     xlim([0 max(freq)]);
+% 
+%     % ---- Fase ----
+%     subplot(2,1,2);
+%     plot(freq, FRF_phase, 'r', 'LineWidth', 2);
+%     grid on;
+%     xlabel('Frequenza [Hz]');
+%     ylabel('Fase [rad]');
+%     title('Funzione di Trasferimento - Fase');
+%     xlim([0 max(freq)]);
+% 
+% end
+
+% Inizializzazione matrice FRF per tutti gli xj
+frf = zeros(length(omega), length(xj));
+
+% Colori per i plot (opzionale: si può personalizzare con colormap)
+color_map = lines(length(xj));
+
+% Calcolo della FRF per ogni xj
+for ii = 1:length(xj)
+    % Trova gli indici corrispondenti a xj e xk
     [~, pos_xj] = min(abs(x - xj(ii)));
-    
-    % Trova l'indice di xk nel vettore x
     [~, pos_xk] = min(abs(x - xk));
-    
-    % modal mass vector initialization
-    modal_mass = zeros(1,length(i_nat));
-    
-    % modal mass calculation for every mode
+
+    % Calcolo massa modale
+    modal_mass = zeros(1, length(i_nat));
     for i = 1:length(i_nat)
-        modal_mass(i,1) = m * trapz(x,modes_shapes(i,:).^2);
+        modal_mass(i) = m * trapz(x, modes_shapes(i,:).^2);
     end
-    
-    
-    % transfer function initialization
-    FRF = zeros(1,length(omega));
-    
-    % transfer function calculation
+
+    % Calcolo FRF
+    FRF = zeros(1, length(omega));
     for k = 1:length(omega)
-        FRF(k) = 0; % inizializza a zero
         for i = 1:length(i_nat)
-            FRF(k) = FRF(k) + ( ( modes_shapes(i,pos_xj) * modes_shapes(i,pos_xk) ) / modal_mass(i) ) / ...
-                         ( -omega(k)^2 + 2i * xsi * omega(k) * omega(i_nat(i)) + omega(i_nat(i))^2 );
+            num = modes_shapes(i,pos_xj) * modes_shapes(i,pos_xk);
+            den = -omega(k)^2 + 2i*xsi*omega(k)*omega(i_nat(i)) + omega(i_nat(i))^2;
+            FRF(k) = FRF(k) + (num / modal_mass(i)) / den;
         end
     end
 
-    % salvo la FRF nella matrice da esoportare
-    frf(:,ii) = FRF.';
-    
-    % % transfer function calculation for single unit impulse force
-    % for i = 1:length(i_nat)
-    %     num = modes_shapes(i, pos_xj) * modes_shapes(i, pos_xk);
-    %     den = -omega.^2 + 2i * xsi * omega * omega(i_nat(i)) + omega(i_nat(i))^2;
-    %     FRF = FRF + (num / modal_mass(i)) ./ den;
-    % end
-    
-    %% FRF plot 
-    % Calcolo ampiezza e fase della FRF
-    FRF_amp = abs(FRF);             % modulo
-    FRF_phase = angle(FRF);         % fase in radianti
-
-    % Crea la figura con due subplot
-    figure;
-
-    % ---- Ampiezza (semilogaritmica) ----
-    subplot(2,1,1);
-    semilogy(freq, FRF_amp, 'b', 'LineWidth', 2);
-    grid on;
-    xlabel('Frequenza [Hz]');
-    ylabel('|G(j\omega)|');
-    title('Funzione di Trasferimento - Ampiezza');
-    xlim([0 max(freq)]);
-
-    % ---- Fase ----
-    subplot(2,1,2);
-    plot(freq, FRF_phase, 'r', 'LineWidth', 2);
-    grid on;
-    xlabel('Frequenza [Hz]');
-    ylabel('Fase [rad]');
-    title('Funzione di Trasferimento - Fase');
-    xlim([0 max(freq)]);
-    
+    % Salva FRF calcolata
+    frf(:, ii) = FRF.';
 end
+
+% === PLOT ===
+
+% Calcolo ampiezza e fase
+FRF_amp = abs(frf);
+FRF_phase = angle(frf);
+
+% Crea la figura
+figure('Name', 'FRF - Ampiezza e Fase', 'Color', 'w');
+
+% ---- Subplot Ampiezza (semilog) ----
+subplot(2,1,1);
+hold on;
+for ii = 1:length(xj)
+    semilogy(freq, FRF_amp(:,ii), 'LineWidth', 1.8, 'Color', color_map(ii,:));
+    set(gca, 'YScale', 'log')
+end
+grid on;
+xlabel('Frequenza [Hz]', 'FontSize', 11);
+ylabel('|G(j\omega)|', 'FontSize', 11);
+title(' Ampiezza', 'FontWeight', 'bold');
+xlim([min(freq) max(freq)]);
+legend(arrayfun(@(v) sprintf('acc in %.1f m', v), xj, 'UniformOutput', false), ...
+       'FontSize', 9, 'Location', 'northeast');
+
+% ---- Subplot Fase ----
+subplot(2,1,2);
+hold on;
+for ii = 1:length(xj)
+    plot(freq, FRF_phase(:,ii), 'LineWidth', 1.8, 'Color', color_map(ii,:));
+end
+grid on;
+xlabel('Frequenza [Hz]', 'FontSize', 11);
+ylabel('Fase [rad]', 'FontSize', 11);
+title('Fase', 'FontWeight', 'bold');
+xlim([min(freq) max(freq)]);
+legend(arrayfun(@(v) sprintf('acc in %.1f m', v), xj, 'UniformOutput', false), ...
+       'FontSize', 9, 'Location', 'northeast');
+
+% Imposta layout compatto
+sgtitle(sprintf('FRF con forzante in %.1f m',xk), 'FontSize', 14, 'FontWeight', 'bold');
+
 
 % Crea la cartella "Results" se non esiste
 output_folder = 'Results\Analytic\';
@@ -244,7 +319,7 @@ suffix = sprintf('co-located_%.2fm', xk);
 mat_path = fullfile(output_folder, ['FRF_analytical_' suffix '.mat']);
 
 % Salva il file
-save(mat_path, 'freq', 'frf');
+% save(mat_path, 'freq', 'frf');
 
 mode_path = fullfile(output_folder, ['PhiMatrix_' suffix '.mat']);
 save(mode_path,"modes_shapes");
