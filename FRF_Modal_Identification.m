@@ -241,17 +241,22 @@ uibutton(fig, ...
             f_central = locs(modeIndex);
 
             % Calcolo della larghezza della finestra: metà distanza tra picchi adiacenti
+            resol = 15;
             if modeIndex == 1
+                if length(modeIndex) == 1
+                    df = 50;
+                else
                 % Primo picco: guarda solo verso il prossimo
-                df = (locs(2) - locs(1)) / 15;
+                df = (locs(2) - locs(1)) / resol;
+                end
             elseif modeIndex == length(locs)
                 % Ultimo picco: guarda solo verso il precedente
-                df = (locs(end) - locs(end-1)) / 15;
+                df = (locs(end) - locs(end-1)) / resol;
             else
                 % Picchi centrali: usa la media tra le due distanze adiacenti
                 df1 = locs(modeIndex) - locs(modeIndex - 1);
                 df2 = locs(modeIndex + 1) - locs(modeIndex);
-                df = min(df1, df2) / 15; % più conservativo
+                df = min(df1, df2) / resol; % più conservativo
             end
 
             % Estendi di un piccolo fattore (es. 20%) per sicurezza
@@ -275,7 +280,7 @@ uibutton(fig, ...
             modelFun = @(p, omega_vec) p(3)./ (-omega_vec.^2 + 2j*p(2)*p(1).*omega_vec + p(1)^2) + p(4) + ( p(5)./omega_vec.^2);
             % funzione con parametri scalati
             scale = [1, 1, 1, 1e-3, 1e-6];
-            modelFun_scaled = @(p, omega_vec) modelFun(p .* scale, omega_vec);
+            modelFun_scaled = @(p, omega_vec) modelFun(p .* scale, omega_vec).';
 
             % cost function da minimizzare
             residui = @(p) sum( real(G_exp - modelFun_scaled(p, omega_vec)).^2 + imag(G_exp - modelFun_scaled(p, omega_vec)).^2  );
@@ -425,7 +430,7 @@ uibutton(fig, ...
         function exportData()
         
             % Crea cartella "Results" se non esiste
-            resultsDir = 'Results/Beam Optimized';
+            resultsDir = 'Results/Rail Optimized';
             if ~exist(resultsDir, 'dir')
                 resultDir = pwd;
             end
@@ -433,14 +438,15 @@ uibutton(fig, ...
             % === Salva FRF (ampiezza e fase) ===
             frfData = G_total(:);
             freqData = f_range(:);
-        
-            % Estrazione della posizione della martellata dal nome del file
-            [~, filebase, ~] = fileparts(filename);  % Estrai il nome del file senza l'estensione
-            pos_hammer_str = extractBetween(filebase, 'co-located_', 'm');  % Estrai la posizione della martellata
-            pos_hammer = str2double(pos_hammer_str{1});  % Converti la posizione della martellata in un numero (double)
             
+           
+            % Estrazione della posizione della martellata dal nome del file
+            % [~, filebase, ~] = fileparts(filename);  % Estrai il nome del file senza l'estensione
+            % pos_hammer_str = extractBetween(filebase, 'co-located_', 'm');  % Estrai la posizione della martellata
+            % pos_hammer = str2double(pos_hammer_str{1});  % Converti la posizione della martellata in un numero (double)
+            % 
             % Crea un suffisso con la posizione della martellata e l'indice dell'accelerometro
-            suffix = sprintf('hammer_%.2fm_acc_%d', pos_hammer, accIndex);
+            suffix = sprintf('acc_%d', accIndex);
         
             % Percorsi file FRF
             frfMATname = fullfile(resultsDir, ['FRF_SDOF_Optimize_' suffix '.mat']);
@@ -452,7 +458,7 @@ uibutton(fig, ...
             modeTable = cell2table(modes, ...
                 'VariableNames', {'Frequenza_Hz', 'Damping_xi', 'omega0', 'A', 'Rh', 'Rl'});
             
-            resultsDir = 'Results/Beam Optimized/Table Modi';
+            resultsDir = 'Results/Rail Optimized/Table Modi';
             if ~exist(resultsDir, 'dir')
                 resultDir = pwd;
             end
@@ -462,6 +468,8 @@ uibutton(fig, ...
         
             % Salva la tabella dei modi in formato .mat
             save(modesMATname, 'modeTable');
+
+            save(fullfile(resultsDir,'freq'),'f_range');
         
             % Conferma
             msgbox({'Dati esportati con successo!'}, 'Esportazione completata');
