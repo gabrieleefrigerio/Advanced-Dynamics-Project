@@ -281,7 +281,7 @@ uibutton(fig, ...
             residui = @(p) sum( real(G_exp - modelFun_scaled(p, omega_vec)).^2 + imag(G_exp - modelFun_scaled(p, omega_vec)).^2  );
 
             % setting lsqnonlin
-            opts = optimoptions('lsqnonlin','Display','off');
+            opts = optimoptions('lsqnonlin', 'Display', 'iter', 'TolFun',1e-12, 'TolX',1e-12);
 
             % effettuo l'ottimizzazione
             [popt_scaled, ~] = lsqnonlin(residui, p0, [], [], opts);
