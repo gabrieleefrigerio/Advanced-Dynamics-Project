@@ -392,12 +392,13 @@ function runOptimization()
         for i = 1:size(allParams,1)
             p = allParams(i,:);
             A = p(3);
-            G_total = G_total + A ./ (-omega_vec.^2 + 2j*p(2)*p(1)*omega_vec + p(1)^2) + p(4) + (p(5)./omega_vec.^2);
+            G_total = G_total + A ./ (-omega_vec.^2 + 2j*p(2)*p(1)*omega_vec + p(1)^2);
             modes(i,:) = {p(1)/(2*pi), p(2), p(1), p(3), p(4), p(5)};
         end
-
+        ottimizzaResidui()
+        G_total =  G_total + allParams(size(allParams,1), 4) + allParams(size(allParams,1), 5)./omega_vec.^2; %sommo i residui dell'ultimo modo
         modeTable = cell2table(modes, 'VariableNames', {'Frequenza (Hz)', 'Damping (xi)', 'omega0', 'A', 'Rh', 'Rl'});
-
+            
         % Tabella a sinistra (20% larghezza)
         uit = uitable(figFinal, ...
             'Units', 'normalized', ...
@@ -440,6 +441,29 @@ function runOptimization()
             'Position', [940 10 200 30], ...
             'Callback', @(~,~) close(figFinal));
 
+%% FUNZIONE OTTIMIZZAZIONE RESIDUI FINALE
+   function ottimizzaResidui()
+        omega_vec = 2*pi*f_range;
+
+        % Parametri modali (senza residui)
+        G_base = zeros(size(omega_vec));
+        for i = 1:size(allParams,1)
+            p = allParams(i,:);
+            A = p(3);
+            G_base = G_base + A ./ (-omega_vec.^2 + 2j*p(2)*p(1)*omega_vec + p(1)^2);
+        end
+         G_base = G_base.';
+        % Funzione obiettivo per ottimizzazione Rh e Rl
+        r0 = allParams(end,4:5);
+        opts = optimoptions('lsqnonlin', 'Display', 'iter', 'TolFun',1e-12, 'TolX',1e-12);
+        obj = @(res) sum(real(G_base + res(1) + res(2)./omega_vec.^2 - FRF_range).^2 + imag(G_base + res(1) + res(2)./omega_vec.^2 - FRF_range).^2);
+        % Ottimizzazione (puoi usare fmincon se vuoi vincoli)
+        res_ottimizzati = lsqnonlin(obj, r0, [], [], opts);
+        % Aggiorna i parametri
+        allParams(end,4) = res_ottimizzati(1);
+        allParams(end,5) = res_ottimizzati(2);
+        modes(end,5:6) = {res_ottimizzati(1), res_ottimizzati(2)}
+    end
         %% FUNZIONE TASTO EXPORT
         function exportData()
 
@@ -588,5 +612,5 @@ omega_vec = 2 * pi * f_range;
         end
     end
 
-
 end
+
