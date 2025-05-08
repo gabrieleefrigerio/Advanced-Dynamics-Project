@@ -130,7 +130,7 @@ end
 end
 
 % === Polar plot dettagliato del modo finale ===
-modo = 2;
+modo = 1;
 phi = phi_matrix(:, modo);                   % Dati modali identificati
 theta = deg2rad(0:15:165) - pi/2;            % Angoli in radianti + rotazione 90° oraria
 
@@ -141,15 +141,20 @@ R = 10000;                                   % Raggio base per la ciambella
 R_deformato = R + phi;
 
 % Cerchio non deformato (per riferimento)
-theta_circle = deg2rad(0:15:360);     % Anche il cerchio ruotato
+theta_circle = deg2rad(0:1:360);     % Anche il cerchio ruotato
 circle = ones(size(theta_circle')) * R;
 
 % === Plot ===
 figure;
 polarplot(theta_circle, circle, 'k--', 'LineWidth', 1.0);  % Cerchio di riferimento
 hold on;
-polarplot(theta, R_deformato, 'r-o', 'LineWidth', 2);      % Forma modale
-polarplot(-theta, -R_deformato, 'b-o', 'LineWidth', 2);     % Forma riflessa
+theta_fine = linspace(min(theta), max(theta), 360);  % Più punti angolari
+R_interp = interp1(theta, R_deformato, theta_fine, 'spline');  % Interpolazione spline
+polarplot(theta_fine, R_interp, 'r-', 'LineWidth', 1);      % Forma modale
+hold on;
+polarplot(-theta_fine, -R_interp, 'b-', 'LineWidth', 1);     % Forma riflessa
+polarplot(theta, R_deformato, 'ro', 'LineWidth', 2);      % Forma modale
+polarplot(-theta, -R_deformato, 'bo', 'LineWidth', 2);     % Forma riflessa
 rlim([0, R + max(abs(phi))*1.1]); 
 title('Modo deformato - rappresentazione polare');
 
