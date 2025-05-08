@@ -130,7 +130,7 @@ end
 end
 
 % === Polar plot dettagliato del modo finale ===
-modo = 1;
+modo = 2;
 phi = phi_matrix(:, modo);                   % Dati modali identificati
 theta = deg2rad(0:15:165) - pi/2;            % Angoli in radianti + rotazione 90° oraria
 
@@ -145,7 +145,7 @@ theta_circle = deg2rad(0:1:360);     % Anche il cerchio ruotato
 circle = ones(size(theta_circle')) * R;
 
 % === Plot ===
-figure;
+figure('Name', 'Modeshapes', 'NumberTitle', 'off', 'Color', 'w');
 polarplot(theta_circle, circle, 'k--', 'LineWidth', 1.0);  % Cerchio di riferimento
 hold on;
 theta_fine = linspace(min(theta), max(theta), 360);  % Più punti angolari
@@ -156,15 +156,18 @@ polarplot(-theta_fine, -R_interp, 'b-', 'LineWidth', 1);     % Forma riflessa
 polarplot(theta, R_deformato, 'ro', 'LineWidth', 2);      % Forma modale
 polarplot(-theta, -R_deformato, 'bo', 'LineWidth', 2);     % Forma riflessa
 rlim([0, R + max(abs(phi))*1.1]); 
-title('Modo deformato - rappresentazione polare');
+rticklabels([]);        % Rimuove le etichette radiali
+thetaticks(0:15:360);
+thetaticklabels({'90°', '105°', '120°', '135°', '150°', '165°', '180°', '195°', '210°', '225°', '240°', '255°', '270°', '285°', '300°',  '315°', '330°', '345°', '0°', '15°', '30°', '45°', '60°', '75°',});   % Rimuove le etichette angolari
 
 % Etichette angolari (accelerometri)
 for i = 1:length(theta)
     r_text = R + max(abs(phi)) * 1.05;  % Posizione leggermente esterna
     text(theta(i), r_text, sprintf('%d', i), ...
-         'HorizontalAlignment', 'center', ...
-         'VerticalAlignment', 'middle', ...
-         'FontSize', 10);
+     'HorizontalAlignment', 'center', ...
+     'VerticalAlignment', 'middle', ...
+     'FontSize', 10, 'FontWeight', 'bold', Color = [128 0 128]/255 );
+
 end
 
 % Titolo e legenda
