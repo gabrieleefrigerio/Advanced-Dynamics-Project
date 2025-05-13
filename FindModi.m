@@ -18,7 +18,8 @@ x = linspace(0,L, length(modes_shapes));
 
 
 % Seleziona la cartella contenente i file .mat e .txt
-cartella = uigetdir('Seleziona la cartella contenente i file .mat e .txt');
+% cartella = uigetdir('Seleziona la cartella contenente i file .mat e .txt');
+cartella = [pwd '\Results\Beam Optimized\Table Modi'];
 
 % Lista dei file .mat nella cartella
 file_mat = dir(fullfile(cartella, '*.mat'));
@@ -144,7 +145,7 @@ n_rows = ceil(sqrt(n_modi));
 n_cols = ceil(n_modi / n_rows);
 
 % Crea una figura unica
-figure('Name', 'Deformate Modali', 'NumberTitle', 'off', 'Color', 'w');
+figure('Name', 'Deformate Modali', 'NumberTitle', 'off', 'Color', 'w','Position', [100, 100, 1700, 900]);
 
 for m = 1:n_modi
     deformata = phi_matrix(:, m);  % Deformata del modo m
